@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+
+  email-gateway:
+    build: ./email-gateway
+    container_name: email-gateway
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092
+    ports:
+      - "4001:4000"
+
+  ticket-service:
+    build: ./ticket-service
+    container_name: ticket-service
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092
+    ports:
+      - "4002:4000"
+
+  agent-server:
+    build: ./agent-server
+    container_name: agent-server
+    depends_on:
+      - kafka
+    environment:
+      - KAFKA_BROKER=kafka:9092
+    ports:
+      - "4003:4000"
+
+  agent-ui:
+    build: ./agent-ui
+    container_name: agent-ui
+    depends_on:
+      - agent-server
+    ports:
+      - "3000:80"
