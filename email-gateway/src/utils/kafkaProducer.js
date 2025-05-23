@@ -1,8 +1,10 @@
 import { Kafka } from 'kafkajs';
+import dotenv from 'dotenv'
 
+dotenv.config();
 const kafka = new Kafka({
   clientId: 'email-gateway',
-brokers: process.env.KAFKA_BROKER.split(',')
+  brokers: [process.env.KAFKA_BROKER]
 });
 
 const producer = kafka.producer();

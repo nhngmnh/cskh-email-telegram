@@ -28,7 +28,7 @@ export async function startImapIdle() {
       };
 
       console.log('[IMAP] New email received:', parsedEmail.subject);
-      await sendToKafka('incoming-emails', parsedEmail);
+      await sendToKafka('agent-responses', parsedEmail);
 
       lastUid = message.uid; // Cập nhật UID sau mỗi email
     }

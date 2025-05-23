@@ -2,8 +2,10 @@
   "name": "ticket-service",
   "version": "1.0.0",
   "main": "index.js",
+   "type": "module",    
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "server": "nodemon index.js"
   },
   "author": "min",
   "license": "ISC",
@@ -12,6 +14,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "kafkajs": "^2.2.4"
+    "kafkajs": "^2.2.4",
+    "nodemon": "^3.1.10"
   }
 }
