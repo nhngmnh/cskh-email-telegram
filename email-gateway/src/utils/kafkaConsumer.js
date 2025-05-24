@@ -16,7 +16,7 @@ export async function listenForAgentResponse() {
   await consumer.run({
     eachMessage: async ({ message }) => {
       const content = JSON.parse(message.value.toString());
-      console.log('[Kafka] Agent response received:', content);
+     // console.log('[Kafka] Agent response received:', content);
     }
   });
 
