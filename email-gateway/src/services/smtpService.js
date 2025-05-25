@@ -1,33 +1,37 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
+import { emailAccounts } from '../config/emailAccounts.js';
 
-dotenv.config();
+export function createTransporter(email) {
+  const account = emailAccounts[email];
+  if (!account) throw new Error(`No SMTP config for email: ${email}`);
 
-// Tạo kết nối tới SMTP server (ví dụ: Gmail SMTP)
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,       // ví dụ: smtp.gmail.com
-  port: parseInt(process.env.SMTP_PORT), // ví dụ: 465 (SSL) hoặc 587 (TLS)
-  secure: process.env.SMTP_SECURE === 'true', // true nếu dùng SSL (port 465)
-  auth: {
-    user: process.env.SMTP_USER,     // Email dùng để gửi
-    pass: process.env.SMTP_PASS      // Mật khẩu ứng dụng (App Password nếu dùng Gmail)
-  }
-});
+  return nodemailer.createTransport({
+    host: account.smtp.host,
+    port: account.smtp.port,
+    secure: account.smtp.secure,
+    auth: {
+      user: email,
+      pass: account.appPassword
+    }
+  });
+}
 
-export async function sendEmail(to, subject, html) {
+export async function sendEmail(emailFrom, to, subject, html) {
+  const transporter = createTransporter(emailFrom);
+
   const mailOptions = {
-    from: process.env.SMTP_USER, // email người gửi
-    to: to,
-    subject: subject,
-    html: html
+    from: emailFrom,
+    to,
+    subject,
+    html
   };
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log('[SMTP] Email đã được gửi:', info.messageId);
+    console.log(`[SMTP] Email sent from ${emailFrom}:`, info.messageId);
     return info;
   } catch (err) {
-    console.error('[SMTP] Lỗi khi gửi email:', err.message);
+    console.error(`[SMTP] Error sending email from ${emailFrom}:`, err.message);
     throw err;
   }
 }

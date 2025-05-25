@@ -2,23 +2,35 @@ version: "3.8"
 
 services:
   kafka:
-    image: bitnami/kafka:latest
+    image: bitnami/kafka:3.7.1
     container_name: kafka
     ports:
       - "9092:9092"
+      - "9093:9093" # Controller port
     restart: unless-stopped
     environment:
+      - KAFKA_HEAP_OPTS=-Xms1g -Xmx4g # Set JVM heap size to avoid Java heap space errors
       - KAFKA_CFG_NODE_ID=0
       - KAFKA_CFG_PROCESS_ROLES=broker,controller
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
-      # Giới hạn kích thước message
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
       - KAFKA_CFG_MESSAGE_MAX_BYTES=1200000000
       - KAFKA_CFG_REPLICA_FETCH_MAX_BYTES=1200000000
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=1 # Ensure single broker compatibility
+      - KAFKA_CFG_OFFSETS_TOPIC_NUM_PARTITIONS=50 # Default partitions for __consumer_offsets
+      - KAFKA_CREATE_TOPICS=incoming-emails:1:1,sending-emails:1:1,agent-responses:4:1 # Added agent-responses
+    volumes:
+      - kafka_data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
-      # Tạo sẵn 2 topic: incoming-emails và sending-emails
-      - KAFKA_CREATE_TOPICS=incoming-emails:1:1,sending-emails:1:1
+volumes:
+  kafka_data:
