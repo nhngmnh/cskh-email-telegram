@@ -2,7 +2,7 @@
   "name": "ticket-service",
   "version": "1.0.0",
   "main": "index.js",
-   "type": "module",    
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "server": "nodemon index.js"
@@ -15,6 +15,7 @@
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "kafkajs": "^2.2.4",
+    "mailparser": "^3.7.3",
     "nodemon": "^3.1.10"
   }
 }

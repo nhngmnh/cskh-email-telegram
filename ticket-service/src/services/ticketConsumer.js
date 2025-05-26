@@ -1,4 +1,5 @@
 import { ticketConsumer } from "../config/kafkaConfig.js";
+import { handleIncomingEmails } from "../utils/handleMessage.js";
 
 
 export async function startTicketConsumer() {
@@ -6,7 +7,7 @@ export async function startTicketConsumer() {
   console.log('[Kafka] Connected to Kafka as ticket-service');
 
   await ticketConsumer.subscribe({ topic: 'acd-tickets', fromBeginning: false });
-  await ticketConsumer.subscribe({ topic: 'sending-emails', fromBeginning: false });
+  await ticketConsumer.subscribe({ topic: 'incoming-emails', fromBeginning: false });
   await ticketConsumer.subscribe({ topic: 'agent-responses', fromBeginning: false });
 
   await ticketConsumer.run({
@@ -21,8 +22,9 @@ export async function startTicketConsumer() {
           case 'acd-tickets':
             handleAcdTicket(data);
             break;
-          case 'sending-emails':
-            handleSendingEmail(data);
+          case 'incoming-emails':
+            handleIncomingEmails(data);
+             
             break;
           case 'agent-responses':
             handleAgentResponse(data);
@@ -41,10 +43,6 @@ function handleAcdTicket(data) {
   // TODO: add logic to process ticket
 }
 
-function handleSendingEmail(data) {
-  console.log('[TicketService] Handling Sending Email:', data);
-  // TODO: add logic to process email sending info
-}
 
 function handleAgentResponse(data) {
   console.log('[TicketService] Handling Agent Response:', data);

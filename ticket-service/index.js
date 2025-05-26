@@ -6,7 +6,7 @@ async function startApp() {
   try {
     await initKafkaProducer();
     await initKafkaConsumer();
-    await startTicketConsumer();
+   await startTicketConsumer();
   } catch (err) {
     console.error('[Startup] Error:', err);
     process.exit(1);
