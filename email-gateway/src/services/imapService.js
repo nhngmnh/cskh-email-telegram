@@ -8,7 +8,7 @@ async function startImapIdle(email, account) {
     let reconnectTimeoutId = null;
 
     // --- Hàm trợ giúp: Lên lịch kết nối lại ---
-    const scheduleReconnect = (delay = 5000) => {
+    const scheduleReconnect = (delay = 3000) => {
         if (reconnectTimeoutId) clearTimeout(reconnectTimeoutId);
         console.warn(`[IMAP] Scheduling reconnect for ${email} in ${delay} ms...`);
         reconnectTimeoutId = setTimeout(connect, delay);
@@ -55,58 +55,77 @@ async function startImapIdle(email, account) {
         });
 
         // Xử lý khi có email mới (sự kiện 'exists')
-        client.on('exists', async () => {
-            // LOẠI BỎ kiểm tra `if (!client.connected)` ở đây
-            // Lý do: client.fetch sẽ tự báo lỗi NoConnection nếu không có kết nối.
-            // Điều này tránh trường hợp bỏ qua email mới khi đang trong quá trình refresh IDLE.
+       let isFetching = false;
 
-            console.log(`[IMAP] New email detected for ${email}. Fetching...`);
-            try {
-                const newUids = await client.search({ uid: `${lastUid + 1}:*` });
-                if (newUids.length === 0) {
-                    console.log(`[IMAP] No truly new emails found for ${email} beyond lastUid ${lastUid}.`);
-                    return;
-                }
+client.on('exists', async () => {
+    if (isFetching) {
+        console.log(`[IMAP] Already fetching emails for ${email}, skipping this exists event.`);
+        return;
+    }
 
-                let maxUidInBatch = lastUid;
+    isFetching = true;
+    console.log(`[IMAP] New email detected for ${email}. Fetching...`);
 
-                for await (const message of client.fetch(newUids, {
-                    envelope: true,
-                    source: true,
-                    uid: true,
-                    internalDate: true
-                })) {
-                    const parsedEmail = {
-                        from: message.envelope.from?.[0]?.address || 'unknown',
-                        to: message.envelope.to?.map(t => t.address).join(', ') || 'unknown',
-                        subject: message.envelope.subject || '(No Subject)',
-                        date: message.internalDate?.toISOString() || new Date().toISOString(),
-                        raw: message.source?.toString() || ''
-                    };
+    try {
+        const newUids = await client.search({ uid: `${lastUid + 1}:*` });
 
-                    try {
-                        await sendToKafka('sending-emails', parsedEmail);
-                        console.log(`[Kafka] Successfully sent email UID ${message.uid} from ${email} to Kafka.`);
-                        if (message.uid > maxUidInBatch) {
-                            maxUidInBatch = message.uid;
-                        }
-                    } catch (err) {
-                        console.error(`[Kafka] Failed to send email UID ${message.uid} from ${email} to Kafka:`, err);
-                    }
-                }
-                lastUid = maxUidInBatch;
-                console.log(`[IMAP] Finished processing new emails for ${email}. lastUid updated to ${lastUid}.`);
+        if (newUids.length === 0) {
+            console.log(`[IMAP] No truly new emails found for ${email} beyond lastUid ${lastUid}.`);
+            isFetching = false;
+            return;
+        }
 
-            } catch (err) {
-                // Nếu lỗi NoConnection trong khi fetch, kết nối đã bị ngắt, cần reconnect
-                if (err.code === 'NoConnection') {
-                    console.warn(`[IMAP] No active connection for ${email} during fetch. Will attempt reconnect.`);
-                    scheduleReconnect(); // Kích hoạt reconnect ngay lập tức
-                } else {
-                    console.error(`[IMAP] Error fetching new emails for ${email}:`, err);
-                }
+        let maxUidInBatch = lastUid;
+        const sendTasks = [];
+
+        for await (const message of client.fetch(newUids, {
+            envelope: true,
+            source: true,
+            uid: true,
+            internalDate: true
+        })) {
+            const parsedEmail = {
+                from: message.envelope.from?.[0]?.address || 'unknown',
+                to: message.envelope.to?.map(t => t.address).join(', ') || 'unknown',
+                subject: message.envelope.subject || '(No Subject)',
+                date: message.internalDate?.toISOString() || new Date().toISOString(),
+                raw: message.source?.toString() || ''
+            };
+
+            // Đẩy promise gửi Kafka vào mảng, không await tại đây
+            const sendPromise = sendToKafka('incoming-emails', parsedEmail)
+                .then(() => {
+                    console.log(`[Kafka] Successfully sent email UID ${message.uid} from ${email} to Kafka.`);
+                })
+                .catch(err => {
+                    console.error(`[Kafka] Failed to send email UID ${message.uid} from ${email} to Kafka:`, err);
+                });
+
+            sendTasks.push(sendPromise);
+
+            if (message.uid > maxUidInBatch) {
+                maxUidInBatch = message.uid;
             }
-        });
+        }
+
+        // Đợi tất cả các email được gửi xong
+        await Promise.all(sendTasks);
+
+        lastUid = maxUidInBatch;
+        console.log(`[IMAP] Finished processing new emails for ${email}. lastUid updated to ${lastUid}.`);
+
+    } catch (err) {
+        if (err.code === 'NoConnection') {
+            console.warn(`[IMAP] No active connection for ${email} during fetch. Will attempt reconnect.`);
+            scheduleReconnect();
+        } else {
+            console.error(`[IMAP] Error fetching new emails for ${email}:`, err);
+        }
+    } finally {
+        isFetching = false;
+    }
+});
+
 
         // --- Bắt đầu kết nối ---
         try {
