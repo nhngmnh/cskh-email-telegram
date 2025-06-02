@@ -1,14 +1,14 @@
 export default (sequelize, DataTypes) => {
-  return sequelize.define('ticketDistribution', {
+  return sequelize.define('ticket', {
     ticketId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
       allowNull: false
     },
-    messageId: {
+    subject: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: false
     },
     from: {
       type: DataTypes.STRING,
@@ -22,9 +22,14 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true
     },
-    previousTicketId: {
-      type: DataTypes.INTEGER,
-      allowNull: true
+    ignoredEmployees: {
+      type: DataTypes.JSON, // mảng các nhân viên đã ignore
+      allowNull: false,
+      defaultValue: []
+    },
+    lastMessageId: {
+      type: DataTypes.STRING,
+      allowNull: false
     },
     receivedDate: {
       type: DataTypes.DATE,
@@ -35,11 +40,12 @@ export default (sequelize, DataTypes) => {
       allowNull: false
     },
     status: {
-      type: DataTypes.STRING,
-      allowNull: false
+      type: DataTypes.ENUM('open', 'closed'),
+      allowNull: false,
+      defaultValue: 'open'
     }
   }, {
-    tableName: 'ticketDistribution',
-    timestamps: false
+    tableName: 'ticket',
+    timestamps: true // Tự động thêm createdAt và updatedAt
   });
 };
