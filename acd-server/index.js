@@ -16,6 +16,7 @@ global.employeeList = [
 ];
 
 global.totalEmployees = global.employeeList.length;
+global.strategy= 'round-robin'
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }))

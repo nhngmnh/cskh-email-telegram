@@ -28,6 +28,7 @@ export async function handleTicketDistribution(ticket) {
     if (availableEmployees.length > 0) {
       const randomIndex = Math.floor(Math.random() * availableEmployees.length);
       assignedEmployee = availableEmployees[randomIndex];
+      
     }
 
   } else if (strategy === 'least-tickets') {
@@ -37,17 +38,23 @@ export async function handleTicketDistribution(ticket) {
         currEmp.activeTickets < minEmp.activeTickets ? currEmp : minEmp
       );
     }
-
+    
   } else {
     console.warn(`Unknown strategy: ${strategy}`);
   }
 
   if (assignedEmployee) {
     console.log(`Ticket ${ticket.ticketId} assigned to ${assignedEmployee.name} (ID: ${assignedEmployee.id}) (name: ${assignedEmployee.name}) with ${assignedEmployee.activeTickets}`);
-    await sendAcdResult('acd-result',assignedEmployee.id);
+    roundRobinIndex=assignedEmployee.id+1;
+    await sendAcdResult('acd-result', {
+  ticketId: ticket.ticketId,
+  assignedTo: assignedEmployee.id,
+});
     assignedEmployee.activeTickets = (assignedEmployee.activeTickets || 0) + 1;
     return true;
   } else {
+
+    // sẽ có hàm đóng close nó ở đây để coi như status nó là closed
     console.log(`No available employee for ticket ${ticket.ticketId}`);
     return false;
   }

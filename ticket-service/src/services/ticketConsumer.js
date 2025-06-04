@@ -1,5 +1,5 @@
 import { ticketConsumer } from "../config/kafkaConfig.js";
-import { handleIncomingEmails } from "../utils/handleMessage.js";
+import { handleACDResult, handleIncomingEmails } from "../utils/handleMessage.js";
 
 
 export async function startTicketConsumer() {
@@ -8,6 +8,7 @@ export async function startTicketConsumer() {
 
   await ticketConsumer.subscribe({ topic: 'acd-tickets', fromBeginning: false });
   await ticketConsumer.subscribe({ topic: 'incoming-emails', fromBeginning: false });
+  await ticketConsumer.subscribe({ topic: 'acd-result', fromBeginning: false });
   await ticketConsumer.subscribe({ topic: 'agent-responses', fromBeginning: false });
 
   await ticketConsumer.run({
@@ -28,6 +29,9 @@ export async function startTicketConsumer() {
             break;
           case 'agent-responses':
             handleAgentResponse(data);
+            break;
+          case 'acd-result':
+            handleACDResult(data)
             break;
           default:
             console.warn(`[Kafka] Unknown topic: ${topic}`);

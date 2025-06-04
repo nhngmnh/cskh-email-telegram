@@ -9,7 +9,6 @@ async function startAcdConsumer() {
       
       try {
            const ticketInfo = JSON.parse(message.value.toString());
-        console.log('Received ticket:', typeof(ticketInfo));
 
         // Xử lý phân phối ở đây
         await handleTicketDistribution(ticketInfo);
