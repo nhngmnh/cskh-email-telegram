@@ -1,15 +1,20 @@
+// index.js
 import express from 'express';
+import cors from 'cors';
 import dotenv from 'dotenv';
-
-dotenv.config(); // Load .env từ ./agent-server/.env
-
+import startAgentConsumer from './src/services/agentConsumer.js';
+import connectDB from './src/config/connectDB.js';
+dotenv.config();
 const app = express();
-const port = process.env.PORT || 4000;
+const PORT = process.env.PORT || 3002;
 
-app.get('/', (req, res) => {
-  res.send('Agent Server is running');
-});
+app.use(cors());
+app.use(express.json());
 
-app.listen(port, () => {
-  console.log(`Agent Server listening on port ${port}`);
+global.agentAssignments = []; // Lưu lịch sử phân phối tạm thời trong RAM
+await connectDB();
+// Khởi động server và consumer
+app.listen(PORT, () => {
+  console.log(`Agent server running on port ${PORT}`);
+  startAgentConsumer();
 });
