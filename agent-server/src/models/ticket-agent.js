@@ -1,10 +1,9 @@
 
 export default (sequelize, DataTypes) => {
   return sequelize.define('ticket', {
-    ticketId: {
+    ticketServerId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true,
       allowNull: false
     },
     from: {

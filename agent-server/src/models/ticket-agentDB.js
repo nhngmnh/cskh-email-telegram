@@ -3,10 +3,10 @@ import sequelize from '../config/sequalize.js'; // đúng đường dẫn config
 import TicketAgentModel from './ticket-agent.js';
 
 // Khởi tạo model TicketDistribution
-const ticket = TicketAgentModel(sequelize, DataTypes);
+const ticket_agent = TicketAgentModel(sequelize, DataTypes);
 
 // Xuất ra để dùng nơi khác
 export {
   sequelize,
-  ticket
+  ticket_agent
 };
