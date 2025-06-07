@@ -17,7 +17,6 @@ export async function handleTicketDistribution(ticket) {
       const candidate = employeeList[index];
       if (!ignored.includes(candidate.id)) {
         assignedEmployee = candidate;
-        acdRoundRobin.roundRobinIndex = (index + 1) % totalEmployees;
         break;
       }
       i++;
@@ -43,19 +42,22 @@ export async function handleTicketDistribution(ticket) {
     console.warn(`Unknown strategy: ${strategy}`);
   }
 
-  if (assignedEmployee) {
-    console.log(`Ticket ${ticket.ticketId} assigned to ${assignedEmployee.name} (ID: ${assignedEmployee.id}) (name: ${assignedEmployee.name}) with ${assignedEmployee.activeTickets}`);
-    roundRobinIndex=assignedEmployee.id+1;
-    await sendAcdResult('acd-result', {
-  ticketId: ticket.ticketId,
-  assignedTo: assignedEmployee.id,
-});
-    assignedEmployee.activeTickets = (assignedEmployee.activeTickets || 0) + 1;
-    return true;
-  } else {
-
-    // sẽ có hàm đóng close nó ở đây để coi như status nó là closed
-    console.log(`No available employee for ticket ${ticket.ticketId}`);
-    return false;
-  }
+if (assignedEmployee) {
+  console.log(`Ticket ${ticket.ticketId} assigned to ${assignedEmployee.name} (ID: ${assignedEmployee.id}) with ${assignedEmployee.activeTickets}`);
+  acdRoundRobin.roundRobinIndex = (acdRoundRobin.roundRobinIndex + 1) % totalEmployees;
+  await sendAcdResult('acd-result', {
+    type: 'distribution_result',
+    ticketId: ticket.ticketId,
+    assignedTo: assignedEmployee.id,
+  });
+  assignedEmployee.activeTickets = (assignedEmployee.activeTickets || 0) + 1;
+  return true;
+} else {
+  console.log(`No available employee for ticket ${ticket.ticketId}`);
+  await sendAcdResult('acd-result', {
+    type: 'close_ticket',
+    ticketId: ticket.ticketId,
+  });
+  return false;
+}
 }

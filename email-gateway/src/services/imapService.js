@@ -1,7 +1,7 @@
 import { ImapFlow } from 'imapflow';
 import { sendToKafka } from '../utils/kafkaProducer.js';
 import { emailAccounts } from '../config/emailAccounts.js';
-
+let clients=new Map();
 async function startImapIdle(email, account) {
     let client;
     let lastUid = 0;
@@ -17,9 +17,15 @@ async function startImapIdle(email, account) {
     // --- Hàm chính để kết nối và duy trì IDLE ---
     const connect = async () => {
         if (client?.connected) {
-            console.log(`[IMAP] Client for ${email} already connected. Skipping reconnect.`);
-            return;
-        }
+    console.log(`[IMAP] Client for ${email} already connected. Reopening INBOX...`);
+    try {
+        await client.mailboxOpen('INBOX');
+    } catch (err) {
+        console.error(`[IMAP] Failed to reopen INBOX for ${email}:`, err);
+        scheduleReconnect();
+    }
+    return;
+}
 
         if (!account?.imap?.host || !account?.imap?.port || !account?.appPassword) {
             console.error(`[IMAP] Invalid configuration for ${email}. Please check config/emailAccounts.js.`);
@@ -130,6 +136,8 @@ client.on('exists', async () => {
         // --- Bắt đầu kết nối ---
         try {
             await client.connect();
+            
+            clients.set(email, client);
             console.log(`[IMAP] Successfully connected to ${email} at ${account.imap.host}:${account.imap.port}.`);
 
             await client.mailboxOpen('INBOX');
@@ -150,7 +158,7 @@ client.on('exists', async () => {
 
             await client.idle();
             console.log(`[IMAP] IMAP IDLE started for ${email}.`);
-
+          
         } catch (err) {
             console.error(`[IMAP] Initial connection failed for ${email}:`, err);
             if (client?.connected) {
@@ -173,4 +181,7 @@ export async function startAllImapIdle() {
         startImapIdle(email, emailAccounts[email]);
     });
     console.log("[IMAP] All IMAP idle processes initiated. They will handle reconnections automatically.");
+}
+export function getImapClientByEmail(email) {
+  return clients.get(email);
 }
