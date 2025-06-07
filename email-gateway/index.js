@@ -8,12 +8,14 @@ import runSimpleImapTest from './src/test/runIMAPTest.js';
 import cors from 'cors'
 import express from 'express'
 import email_gatewayRouter from './src/routes/emailContentRoute.js';
+import replyRouter from './src/routes/replyByAgentRouter.js';
 const app = express();
 const PORT = process.env.PORT || 3003;
 
 app.use(cors());
 app.use(express.json());
-app.use('/',email_gatewayRouter)
+app.use('/emails/content',email_gatewayRouter);
+app.use('/reply-email',replyRouter)
 const bootstrap = async () => {
   try {
     console.log('[email-gateway] Service starting...');

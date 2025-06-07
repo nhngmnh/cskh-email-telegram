@@ -3,7 +3,7 @@ import { simpleParser } from 'mailparser';
 import express from 'express';
 import { emailAccounts } from '../config/emailAccounts.js';
 const email_gatewayRouter=express.Router();
-email_gatewayRouter.get('/emails/content', async (req, res) => {
+email_gatewayRouter.get('/', async (req, res) => {
   const { messageId, to } = req.query;
 
   const client = getImapClientByEmail(to);

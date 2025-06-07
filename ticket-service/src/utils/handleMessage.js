@@ -12,13 +12,13 @@ const handleIncomingEmails = async (data) => {
     const parsed = await simpleParser(data.raw);
 
     const parsedTicket = {
-      from: parsed.from?.text || '',                   // email người gửi
-      to: parsed.to?.text || '',                       // email người nhận
-      subject: parsed.subject || '(no subject)',       // chủ đề
-      date: parsed.date || new Date(),                 // thời gian nhận
-      messageId: parsed.messageId || null,             // ID duy nhất của email này
-      replyTo: parsed.inReplyTo || null                // ID email trước (nếu là reply)
-    };
+  from: parsed.from?.value?.[0]?.address || 'unknown',
+  to: parsed.to?.value?.map(t => t.address).join(',') || 'unknown',
+  subject: parsed.subject || '(no subject)',
+  date: parsed.date?.toISOString?.() || new Date().toISOString(),
+  messageId: parsed.messageId || null,
+  replyTo: parsed.inReplyTo || null
+};
 
     await saveTicketFromEmail(parsedTicket);
   } catch (error) {

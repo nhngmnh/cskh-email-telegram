@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer';
 import { emailAccounts } from '../config/emailAccounts.js';
 
-export function createTransporter(email) {
+// Tạo transporter tương ứng với email cấu hình
+function createTransporter(email) {
   const account = emailAccounts[email];
   if (!account) throw new Error(`No SMTP config for email: ${email}`);
 
@@ -16,22 +17,25 @@ export function createTransporter(email) {
   });
 }
 
-export async function sendEmail(emailFrom, to, subject, html) {
-  const transporter = createTransporter(emailFrom);
+// Gửi email dạng reply (có inReplyTo & references)
+export async function sendReplyEmail(from, to, subject, html, inReplyToMessageId) {
+  const transporter = createTransporter(from);
 
   const mailOptions = {
-    from: emailFrom,
+    from,
     to,
-    subject,
-    html
+    subject: subject.startsWith('Re:') ? subject : `Re: ${subject}`,
+    html,
+    inReplyTo: inReplyToMessageId,
+    references: inReplyToMessageId
   };
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[SMTP] Email sent from ${emailFrom}:`, info.messageId);
+    console.log(`[SMTP] Reply email sent from ${from} to ${to}: ${info.messageId}`);
     return info;
   } catch (err) {
-    console.error(`[SMTP] Error sending email from ${emailFrom}:`, err.message);
+    console.error(`[SMTP] Failed to send reply from ${from} to ${to}:`, err.message);
     throw err;
   }
 }

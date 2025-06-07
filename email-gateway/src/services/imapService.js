@@ -91,10 +91,6 @@ client.on('exists', async () => {
             internalDate: true
         })) {
             const parsedEmail = {
-                from: message.envelope.from?.[0]?.address || 'unknown',
-                to: message.envelope.to?.map(t => t.address).join(', ') || 'unknown',
-                subject: message.envelope.subject || '(No Subject)',
-                date: message.internalDate?.toISOString() || new Date().toISOString(),
                 raw: message.source?.toString() || ''
             };
 
