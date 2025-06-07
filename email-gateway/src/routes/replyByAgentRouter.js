@@ -1,10 +1,10 @@
 // routes/emailReply.js
 import express from 'express';
-import { createTransporter } from '../services/smtpService.js'
+import { sendReplyEmail } from '../services/smtpService.js';
 
 const replyRouter = express.Router();
 
-replyRouter.post('/reply-email', async (req, res) => {
+replyRouter.post('/', async (req, res) => {
   const { from, to, subject, html, inReplyTo, references } = req.body;
 
   if (!from || !to || !html || !inReplyTo) {
@@ -12,7 +12,7 @@ replyRouter.post('/reply-email', async (req, res) => {
   }
 
   try {
-    const info = await sendReplyEmail({ from, to, subject, html, inReplyTo, references });
+    const info = await sendReplyEmail(from, to, subject, html, inReplyTo, references );
     res.json({ message: 'Reply sent', messageId: info.messageId });
   } catch (err) {
     console.error('[SMTP] Failed to send reply:', err.message);

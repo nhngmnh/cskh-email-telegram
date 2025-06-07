@@ -3,8 +3,7 @@ import dotenv from 'dotenv'
 dotenv.config();
 import { startAllImapIdle } from './src/services/imapService.js';
 import { listenForAgentResponse } from './src/utils/kafkaConsumer.js';
-import { sendEmail } from './src/services/smtpService.js';
-import runSimpleImapTest from './src/test/runIMAPTest.js';
+//import runSimpleImapTest from './src/test/runIMAPTest.js';
 import cors from 'cors'
 import express from 'express'
 import email_gatewayRouter from './src/routes/emailContentRoute.js';
@@ -14,6 +13,7 @@ const PORT = process.env.PORT || 3003;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use('/emails/content',email_gatewayRouter);
 app.use('/reply-email',replyRouter)
 const bootstrap = async () => {

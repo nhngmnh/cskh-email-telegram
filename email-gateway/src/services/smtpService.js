@@ -4,8 +4,10 @@ import { emailAccounts } from '../config/emailAccounts.js';
 // Tạo transporter tương ứng với email cấu hình
 function createTransporter(email) {
   const account = emailAccounts[email];
+  console.log(typeof(email));
+  
   if (!account) throw new Error(`No SMTP config for email: ${email}`);
-
+  
   return nodemailer.createTransport({
     host: account.smtp.host,
     port: account.smtp.port,
@@ -24,7 +26,7 @@ export async function sendReplyEmail(from, to, subject, html, inReplyToMessageId
   const mailOptions = {
     from,
     to,
-    subject: subject.startsWith('Re:') ? subject : `Re: ${subject}`,
+    subject: subject,
     html,
     inReplyTo: inReplyToMessageId,
     references: inReplyToMessageId
