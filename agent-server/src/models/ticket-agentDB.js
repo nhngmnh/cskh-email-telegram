@@ -4,7 +4,6 @@ import sequelize from '../config/sequalize.js'; // đúng đường dẫn config
 import TicketAgentModel from './ticket-agent.js';
 import AgentModel from './agent.js';
 
-// Khởi tạo model
 const ticket_agent = TicketAgentModel(sequelize, DataTypes);
 const agent = AgentModel(sequelize, DataTypes);
 

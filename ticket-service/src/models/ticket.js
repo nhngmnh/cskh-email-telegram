@@ -27,9 +27,13 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: []
     },
-    lastMessageId: {
-      type: DataTypes.STRING,
-      allowNull: false
+    html: {
+      type: DataTypes.TEXT('long'), // nội dung email HTML
+      allowNull: true
+    },
+    attachments: {
+      type: DataTypes.TEXT, // sẽ dùng JSON.stringify trước khi lưu
+      allowNull: true
     },
     receivedDate: {
       type: DataTypes.DATE,
@@ -46,6 +50,6 @@ export default (sequelize, DataTypes) => {
     }
   }, {
     tableName: 'ticket',
-    timestamps: true // Tự động thêm createdAt và updatedAt
+    timestamps: true
   });
 };

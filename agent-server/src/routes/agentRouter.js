@@ -80,7 +80,7 @@ agentRouter.post('/login', async (req, res) => {
 const EMAIL_GATEWAY_API = process.env.EMAIL_GATEWAY_API; 
 agentRouter.get('/open-ticket', async (req, res) => {
   try {
-    const {lastMessageId, to} = req.body;
+    const {lastMessageId, to} = req.query;
 
     // Gọi API email-gateway tạo ticket
     console.log(EMAIL_GATEWAY_API);

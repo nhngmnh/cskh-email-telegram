@@ -1,4 +1,3 @@
-
 export default (sequelize, DataTypes) => {
   return sequelize.define('ticket', {
     ticketServerId: {
@@ -18,9 +17,18 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
-    lastMessageId: {
+    subject: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      defaultValue: ''
+    },
+    html: {
+      type: DataTypes.TEXT('long'), // TEXT hoặc LONGTEXT nếu nội dung lớn
+      allowNull: true
+    },
+    attachments: {
+      type: DataTypes.TEXT, // hoặc TEXT nếu bạn muốn stringify trước
+      allowNull: true
     },
     receivedDate: {
       type: DataTypes.DATE,
@@ -30,6 +38,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: false
     },
+    agentResponse:{
+      type:DataTypes.TEXT,
+      allowNull:true,
+      defaultValue:null,
+    },
     status: {
       type: DataTypes.ENUM('open', 'closed'),
       allowNull: false,
@@ -37,6 +50,6 @@ export default (sequelize, DataTypes) => {
     }
   }, {
     tableName: 'ticket-agent',
-    timestamps: true // Tự động thêm createdAt và updatedAt
+    timestamps: true
   });
 };

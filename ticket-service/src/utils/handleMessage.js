@@ -4,28 +4,28 @@ import { ticket } from "../models/ticketDB.js";
 import { sendKafkaMessage } from "../services/sendKafkaMessage.js";
 
 const handleIncomingEmails = async (data) => {
-  if (!data || !data.raw) {
-    return null;
-  }
+  if (!data || !data.raw) return null;
 
   try {
     const parsed = await simpleParser(data.raw);
 
     const parsedTicket = {
-  from: parsed.from?.value?.[0]?.address || 'unknown',
-  to: parsed.to?.value?.map(t => t.address).join(',') || 'unknown',
-  subject: parsed.subject || '(no subject)',
-  date: parsed.date?.toISOString?.() || new Date().toISOString(),
-  messageId: parsed.messageId || null,
-  replyTo: parsed.inReplyTo || null
-};
+      from: parsed.from?.value?.[0]?.address || 'unknown',
+      to: parsed.to?.value?.map(t => t.address).join(',') || 'unknown',
+      subject: parsed.subject || '(no subject)',
+      date: parsed.date?.toISOString?.() || new Date().toISOString(),
+      html: parsed.html || '',
+      attachments: parsed.attachments || []
+    };
 
     await saveTicketFromEmail(parsedTicket);
+
   } catch (error) {
     console.error("Lỗi xử lý email:", error);
-    return null; // Bỏ qua email lỗi
+    return null;
   }
 };
+
 const handleACDResult = async (data) => {
   try {
     const { type, ticketId, assignedTo } = data;
@@ -36,7 +36,6 @@ const handleACDResult = async (data) => {
     }
 
     const ticketSave = await ticket.findOne({ where: { ticketId } });
-
     if (!ticketSave) {
       console.log(`Ticket ${ticketId} not found in DB`);
       return;
@@ -49,29 +48,28 @@ const handleACDResult = async (data) => {
       }
 
       ticketSave.assignedEmployee = assignedTo;
-      ticketSave.dueDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000); // +2 ngày
+      ticketSave.dueDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
 
       await ticketSave.save();
 
-      // Gửi message tiếp nếu cần
       await sendKafkaMessage('ticket-distribution', {
-        ticketServerId:ticketSave.ticketId,
+        ticketServerId: ticketSave.ticketId,
+        html:ticketSave.html,
         from: ticketSave.from,
         to: ticketSave.to,
-        lastMessageId: ticketSave.lastMessageId,
+        subject: ticketSave.subject,
         assignedEmployee: ticketSave.assignedEmployee,
         receivedDate: ticketSave.receivedDate,
-        dueDate:ticketSave.dueDate,
-        status:ticketSave.status
+        dueDate: ticketSave.dueDate,
+        status: ticketSave.status
       });
 
-      console.log(`Updated ticket ${ticketId}: assigned to ${assignedTo}, due in 2 days`);
+      console.log(`Updated ticket ${ticketId}: assigned to ${assignedTo}`);
       return true;
 
     } else if (type === 'close_ticket') {
-      // Xử lý đóng ticket, ví dụ set trạng thái closed
       ticketSave.status = 'closed';
-      ticketSave.assignedEmployee = null;  // hoặc giữ nguyên tùy logic bạn muốn
+      ticketSave.assignedEmployee = null;
 
       await ticketSave.save();
 
@@ -90,5 +88,6 @@ const handleACDResult = async (data) => {
 };
 
 export {
-  handleIncomingEmails,handleACDResult
+  handleIncomingEmails,
+  handleACDResult
 };
