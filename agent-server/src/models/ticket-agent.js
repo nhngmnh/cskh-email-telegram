@@ -15,7 +15,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false
     },
     assignedEmployee: {
-      type: DataTypes.STRING,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     lastMessageId: {

@@ -4,7 +4,7 @@ import express from 'express';
 import { emailAccounts } from '../config/emailAccounts.js';
 const email_gatewayRouter=express.Router();
 email_gatewayRouter.get('/', async (req, res) => {
-  const { messageId, to } = req.query;
+  const { lastMessageId, to } = req.query;
 
   const client = getImapClientByEmail(to);
   if (!client) return res.status(404).json({ error: 'Không có IMAP connection cho email này' });
@@ -12,7 +12,7 @@ email_gatewayRouter.get('/', async (req, res) => {
   try {
     const lock = await client.getMailboxLock('INBOX');
     try {
-      const search = await client.search({ header: { 'message-id': messageId } });
+      const search = await client.search({ header: { 'message-id': lastMessageId } });
       if (!search.length) return res.status(404).json({ error: 'Không tìm thấy email' });
 
       const msg = await client.fetchOne(search[0], { source: true });

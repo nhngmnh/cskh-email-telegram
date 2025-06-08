@@ -4,6 +4,7 @@ import Sidebar from "./components/Sidebar";
 import { Route, Routes } from "react-router-dom";
 import { useContext } from "react";
 import { AppContext } from "./context/AppContext";
+import Login from "./pages/Login";
 
 export default function App() {
   const {token} = useContext(AppContext)
@@ -20,7 +21,7 @@ export default function App() {
   ) : (
     <>
     <ToastContainer />
-      <Login />
+      <Login/>
     </>
   )
 }
