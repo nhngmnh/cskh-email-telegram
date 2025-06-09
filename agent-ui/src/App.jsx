@@ -6,6 +6,7 @@ import { useContext } from "react";
 import { AppContext } from "./context/AppContext";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
+import DetailTicket from "./pages/DetailTicket";
 
 export default function App() {
   const {token} = useContext(AppContext)
@@ -17,6 +18,7 @@ export default function App() {
         <Sidebar/>
         <Routes>
           <Route path="/profile" element={<Profile/>}/>
+          <Route path="/detail-ticket/:id" element={<DetailTicket/>}/>
         </Routes>
       </div>
     </div>

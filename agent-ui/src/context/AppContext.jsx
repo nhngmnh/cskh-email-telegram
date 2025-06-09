@@ -55,7 +55,7 @@ const logout = () => {
     if (!token) return;
     try {
       setLoading(true);
-      const res = await axios.get(`${backendurl}/agent/tickets`, {
+      const res = await axios.get(`${backendurl}/ticket-data`, {
         headers: {
           token
         },
