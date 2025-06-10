@@ -6,11 +6,11 @@ import { Paperclip, Reply, Send, X } from "lucide-react";
 const DetailTicket = () => {
   const { id } = useParams(); // id = ticketServerId
   const navigate = useNavigate();
-  const { dataList, replyToTicket, handleIgnore,status,setStatus,getData } = useContext(AppContext);
+  const { dataList, replyToTicket, handleIgnore, status, setStatus } = useContext(AppContext);
   const [responseText, setResponseText] = useState("");
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [showIgnoreModal, setShowIgnoreModal] = useState(false); // Modal xác nhận từ chối
+  const [showIgnoreModal, setShowIgnoreModal] = useState(false);
 
   const ticket = dataList.find((t) => String(t.ticketServerId) === String(id));
 
@@ -30,17 +30,15 @@ const DetailTicket = () => {
     });
 
     await replyToTicket(formData);
-
     setResponseText("");
     setSelectedFiles([]);
     setShowModal(false);
-    setStatus(prev=>!prev)
-    // Load lại trang
-  //  window.location.reload();
+    setStatus((prev) => !prev);
   };
+
   const handleConfirmIgnore = async () => {
     await handleIgnore(ticket);
-    setStatus(prev=>!prev);
+    setStatus((prev) => !prev);
     navigate("/");
   };
 
@@ -89,8 +87,26 @@ const DetailTicket = () => {
                 <div className="flex items-center gap-2 text-blue-700 mb-2 font-medium">
                   <Reply size={18} /> Phản hồi từ Agent:
                 </div>
-                <div className="text-sm text-gray-800 whitespace-pre-wrap">
-                  {ticket.agentResponse}
+                <div className="text-sm text-gray-800 space-y-1">
+                  {ticket.agentResponse.split("\n").map((line, idx) => {
+                    if (line.startsWith("[file]")) {
+                      const url = line.replace("[file]", "").trim();
+                      return (
+                        <div key={idx}>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 underline hover:text-blue-800"
+                          >
+                            {url}
+                          </a>
+                        </div>
+                      );
+                    } else {
+                      return <div key={idx}>{line}</div>;
+                    }
+                  })}
                 </div>
               </div>
             )}
@@ -115,9 +131,7 @@ const DetailTicket = () => {
                         >
                           <span className="truncate max-w-[80%]">{file.name}</span>
                           <button
-                            onClick={() =>
-                              setSelectedFiles((prev) => prev.filter((_, idx) => idx !== i))
-                            }
+                            onClick={() => setSelectedFiles((prev) => prev.filter((_, idx) => idx !== i))}
                             className="text-red-500 hover:text-red-700"
                             title="Xoá file"
                           >
