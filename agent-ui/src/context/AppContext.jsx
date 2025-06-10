@@ -11,7 +11,7 @@ const AppContextProvider = (props) => {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [dataList, setDataList] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const [totalPages,setTotalPages]=useState(0);
 // login
 const logout = () => {
   localStorage.removeItem('token');
@@ -51,7 +51,7 @@ const logout = () => {
   };
 
 // phan trang
-  const getData = async (page , limit) => {
+  const getData = async (page , limit,filter) => {
     if (!token) return;
     try {
       setLoading(true);
@@ -61,10 +61,12 @@ const logout = () => {
         },
         params: {
           page,
-          limit
+          limit,
+          filter
         }
       });
       setDataList(res.data?.data || []);
+      setTotalPages(res.data.pagination.totalPages);
     } catch (error) {
       console.error("Error fetching paginated data:", error);
       toast.error("Lỗi khi lấy dữ liệu");
@@ -86,6 +88,20 @@ const logout = () => {
       toast.error(error.message);
     }
   };
+  const replyToTicket = async (formData) => {
+  try {
+    const res = await axios.post(backendurl+'/handle-reply', formData, {
+      headers: {
+        token
+      },
+    });
+    toast.success("Phản hồi ticket thành công!")
+  } catch (error) {
+    console.error("Lỗi khi gửi phản hồi:", error);
+    toast.error(error.message)
+  }
+};
+
   useEffect(() => {
     if (token) {
       fetchUserData()
@@ -101,7 +117,8 @@ const logout = () => {
     login,
     register,
     getData,backendurl,
-    logout
+    logout,totalPages,
+    replyToTicket
   };
 
   return (

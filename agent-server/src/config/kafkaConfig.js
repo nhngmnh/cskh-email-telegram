@@ -2,8 +2,8 @@ import { Kafka } from 'kafkajs';
 import dotenv from 'dotenv'
 dotenv.config()
 const kafka = new Kafka({
-  clientId: 'agent-service', // hoặc 'acd-service' tuỳ phía nào dùng
-  brokers: [process.env.KAFKA_BROKER], // Sửa theo địa chỉ Kafka thực tế
+  clientId: 'agent-service',
+  brokers: [process.env.KAFKA_BROKER], 
 });
 
 const consumer = kafka.consumer({ groupId: 'agent-group' });

@@ -1,4 +1,8 @@
 import { ticket_agent,agent } from "../models/ticket-agentDB.js";
+import { Op }from 'sequelize'; // Import để dùng toán tử
+import cloudinary from '../config/cloudinary.js';
+import { producer } from "../config/kafkaConfig.js";
+await producer.connect();
 const getAgentTicketById = async (req, res) => {
   try {
     const agentId = req.body?.agentId;
@@ -9,17 +13,30 @@ const getAgentTicketById = async (req, res) => {
       });
     }
 
+    // Lấy các tham số phân trang và bộ lọc từ query
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
+    const filter = req.query.filter || 'all'; // all | unanswered | answered
 
+    // Điều kiện tìm kiếm cơ bản: của agent hiện tại
+    const whereCondition = { assignedEmployee: agentId };
+
+    // Thêm điều kiện lọc theo filter
+    if (filter === 'unanswered') {
+      whereCondition.agentResponse = null;
+    } else if (filter === 'answered') {
+      whereCondition.agentResponse = { [Op.ne]: null };
+    }
+
+    // Truy vấn dữ liệu theo điều kiện
     const { count, rows: tickets } = await ticket_agent.findAndCountAll({
-      where: { assignedEmployee:agentId },
+      where: whereCondition,
       order: [['updatedAt', 'DESC']],
       limit,
       offset,
-    });
-
+    });    
+    // Trả kết quả về frontend
     return res.json({
       success: true,
       data: tickets,
@@ -27,9 +44,10 @@ const getAgentTicketById = async (req, res) => {
         total: count,
         page,
         limit,
-        totalPages: Math.ceil(count / limit),
+        totalPages: Math.ceil(count/ limit),
       },
     });
+
   } catch (error) {
     console.error('Lỗi khi lấy ticket của agent:', error);
     res.status(500).json({
@@ -38,6 +56,7 @@ const getAgentTicketById = async (req, res) => {
     });
   }
 };
+
 
 const getAgentInfo = async (req, res) => {
   try {
@@ -73,7 +92,59 @@ const getAgentInfo = async (req, res) => {
     });
   }
 };
+
+const handleReply = async (req, res) => {
+  try {
+    const { message, ticketServerId, to, from,subject } = req.body;
+    console.log(message+ ticketServerId);
+    
+    const fileUrls = [];
+
+    // Upload tất cả file nếu có
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: "tickets",
+          resource_type: "auto",
+        });
+        fileUrls.push(result.secure_url);
+      }
+    }
+
+    // Gộp message + attachments thành một chuỗi text (tuỳ bạn định dạng)
+    let agentResponse = message;
+    if (fileUrls.length > 0) {
+      const formattedAttachments = fileUrls.map((url) => `[file]${url}`).join("\n");
+      agentResponse += `\n\n${formattedAttachments}`;
+    }
+
+    // Cập nhật bản ghi ticket_agent
+    await ticket_agent.update(
+      { agentResponse },
+      { where: { ticketServerId } }
+    );
+
+    // Tạo payload gửi Kafka
+    const payload = {
+      subject: `Re: ${subject}`,
+      ticketId: ticketServerId,
+      from,
+      to,
+      message: agentResponse,
+    };
+
+    await producer.send({
+      topic: "agent-responses",
+      messages: [{ value: JSON.stringify(payload) }],
+    });
+
+    return res.json({ success: true, message: "Đã gửi phản hồi và cập nhật DB" });
+  } catch (err) {
+    console.error("Lỗi khi gửi phản hồi:", err);
+    return res.status(500).json({ error: "Không thể gửi phản hồi" });
+  }
+};
 export {
-    getAgentTicketById, getAgentInfo
+    getAgentTicketById, getAgentInfo,handleReply
 }
 

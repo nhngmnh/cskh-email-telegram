@@ -5,7 +5,8 @@ import { agent } from '../models/ticket-agentDB.js';
 import dotenv from 'dotenv'
 import axios from 'axios';
 import authenticateToken from '../middlewares/authAgent.js';
-import {getAgentInfo, getAgentTicketById} from '../controllers/ticketAgentController.js';
+import {getAgentInfo, getAgentTicketById, handleReply} from '../controllers/ticketAgentController.js';
+import upload from '../middlewares/multer.js';
 dotenv.config()
 const agentRouter = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET
@@ -80,7 +81,7 @@ agentRouter.post('/login', async (req, res) => {
   }
 });
 const EMAIL_GATEWAY_API = process.env.EMAIL_GATEWAY_API; 
-
+agentRouter.post('/handle-reply',upload.array("files"),authenticateToken,handleReply)
 agentRouter.get('/ticket-data',authenticateToken,getAgentTicketById);
 agentRouter.get('/agent-info',authenticateToken,getAgentInfo);
 export default agentRouter;

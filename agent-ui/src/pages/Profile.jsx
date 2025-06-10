@@ -10,7 +10,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6 mt-6 bg-white shadow-xl rounded-2xl">
+    <div className="w-3/4 max-w-6xl mx-auto p-6 mt-6 bg-white shadow-xl rounded-2xl ml-4 mr-4">
       {/* Header */}
       <div className="flex items-center gap-4 border-b pb-4 mb-6">
         <UserCircle size={64} className="text-blue-500" />

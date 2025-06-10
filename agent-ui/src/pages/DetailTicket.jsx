@@ -1,42 +1,50 @@
 import React, { useContext, useState } from "react";
 import { useParams } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
-import { Paperclip, Reply, Send } from "lucide-react";
+import { Paperclip, Reply, Send, X } from "lucide-react";
 
 const DetailTicket = () => {
   const { id } = useParams(); // id = ticketServerId
-  const { dataList } = useContext(AppContext);
+  const { dataList, replyToTicket } = useContext(AppContext);
   const [responseText, setResponseText] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [showModal, setShowModal] = useState(false);
 
-  const ticket = dataList.find((t) => String(t.ticketServerId) == String(id));
+  const ticket = dataList.find((t) => String(t.ticketServerId) === String(id));
 
   if (!ticket) {
-    return <div className="p-4 text-gray-600">Không tìm thấy ticket phù hợp.</div>;
+    return <div className="p-4 text-gray-600 text-center">Danh sách trống</div>;
   }
 
-  const handleSendResponse = () => {
-    if (responseText.trim()) {
-      console.log("Gửi phản hồi:", responseText);
-      // TODO: Gọi API gửi phản hồi tại đây nếu cần
-      setResponseText("");
-    }
+  const handleConfirmSend = async () => {
+    const formData = new FormData();
+    formData.append("message", responseText);
+    formData.append("ticketServerId", ticket.ticketServerId);
+    formData.append("to", ticket.from);
+    formData.append("from", ticket.to);
+    formData.append("subject",ticket.subject);
+    selectedFiles.forEach((file) => {
+      formData.append("files", file);
+    });
+    
+    await replyToTicket(formData);
+
+    setResponseText("");
+    setSelectedFiles([]);
+    setShowModal(false);
   };
 
   return (
-    <div className="w-full h-[calc(100vh-64px)] flex flex-col bg-gray-100">
-      {/* Vùng chia 2 cột */}
+    <div className="w-3/4 h-[calc(100vh-64px)] flex flex-col bg-gray-100">
       <div className="flex flex-1 overflow-hidden">
-        {/* Bên trái: hội thoại + nội dung */}
+        {/* Left side: Ticket content */}
         <div className="w-3/4 flex flex-col">
-          {/* Tiêu đề bên trái */}
           <div className="p-4 border-b bg-white">
             <h2 className="text-xl font-bold text-blue-600 text-center">Nội dung Ticket</h2>
           </div>
 
-          {/* Khu vực hiển thị nội dung */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50">
-            {/* Email gốc */}
-            <div className="max-w-lg bg-white p-4 rounded-lg shadow border border-gray-200">
+            <div className="w-full bg-white p-4 rounded-lg shadow border border-gray-200">
               <p className="text-gray-600 text-sm mb-2">Khách hàng gửi:</p>
               <div
                 className="prose max-w-none text-gray-800"
@@ -44,7 +52,6 @@ const DetailTicket = () => {
               />
             </div>
 
-            {/* File đính kèm */}
             {ticket.attachments?.length > 0 && (
               <div className="max-w-lg bg-white p-4 rounded-lg shadow border border-gray-200">
                 <div className="flex items-center gap-2 text-gray-700 mb-2 font-medium">
@@ -67,7 +74,6 @@ const DetailTicket = () => {
               </div>
             )}
 
-            {/* Phản hồi của Agent */}
             {ticket.agentResponse && (
               <div className="max-w-lg bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm ml-auto">
                 <div className="flex items-center gap-2 text-blue-700 mb-2 font-medium">
@@ -80,47 +86,101 @@ const DetailTicket = () => {
             )}
           </div>
 
-          {/* Thanh nhập liệu */}
-          <div className="border-t p-4 flex items-center gap-2 bg-white">
-            <input
-              type="text"
-              value={responseText}
-              onChange={(e) => setResponseText(e.target.value)}
-              placeholder="Nhập phản hồi..."
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-200"
-            />
-            <button
-              onClick={handleSendResponse}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-1"
-            >
-              <Send size={16} /> Gửi
-            </button>
+          {/* Reply box */}
+          <div className="border-t p-4 bg-white">
+            {/* Preview selected files */}
+            {selectedFiles.length > 0 && (
+              <div className="mb-2 text-sm text-gray-700 bg-gray-100 border p-2 rounded">
+                <div className="font-medium mb-1">File đính kèm:</div>
+                <ul className="space-y-1">
+  {selectedFiles.map((file, i) => (
+    <li
+      key={i}
+      className="flex items-center justify-between bg-white px-3 py-1 rounded border text-sm"
+    >
+      <span className="truncate max-w-[80%]">{file.name}</span>
+      <button
+        onClick={() =>
+          setSelectedFiles((prev) => prev.filter((_, idx) => idx !== i))
+        }
+        className="text-red-500 hover:text-red-700"
+        title="Xoá file"
+      >
+        <X size={16} />
+      </button>
+    </li>
+  ))}
+</ul>
+
+              </div>
+            )}
+
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={responseText}
+                onChange={(e) => setResponseText(e.target.value)}
+                placeholder="Nhập phản hồi..."
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-200"
+              />
+
+              {/* File upload */}
+              <label htmlFor="fileInput" className="cursor-pointer text-gray-600 hover:text-blue-600">
+                <Paperclip size={18} />
+              </label>
+              <input
+                id="fileInput"
+                type="file"
+                multiple
+                onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
+                className="hidden"
+              />
+
+              {/* Gửi */}
+              <button
+                onClick={() => setShowModal(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-1"
+              >
+                <Send size={16} /> Gửi
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Bên phải: Chi tiết Ticket */}
+        {/* Right side: Ticket info */}
         <div className="w-1/4 bg-white border-l p-4 overflow-y-auto text-sm text-gray-700 space-y-3">
           <h3 className="text-lg font-semibold text-gray-800 mb-3">Chi tiết Ticket</h3>
-          <div>
-            <span className="font-medium">Mã Ticket:</span> {ticket.ticketServerId}
-          </div>
-          <div>
-            <span className="font-medium">Tiêu đề:</span> {ticket.subject || "Không có"}
-          </div>
-          <div>
-            <span className="font-medium">Ngày tạo:</span>{" "}
-            {new Date(ticket.createdAt).toLocaleString()}
-          </div>
-          <div>
-            <span className="font-medium">Ngày cập nhật:</span>{" "}
-            {new Date(ticket.updatedAt).toLocaleString()}
-          </div>
-          <div>
-            <span className="font-medium">Agent xử lý:</span>{" "}
-            {ticket.assignedTo || "Chưa phân công"}
-          </div>
+          <div><span className="font-medium">Mã Ticket:</span> {ticket.ticketServerId}</div>
+          <div><span className="font-medium">Tiêu đề:</span> {ticket.subject || "Không có"}</div>
+          <div><span className="font-medium">Ngày tạo:</span> {new Date(ticket.createdAt).toLocaleString()}</div>
+          <div><span className="font-medium">Ngày cập nhật:</span> {new Date(ticket.updatedAt).toLocaleString()}</div>
+          <div><span className="font-medium">Agent xử lý:</span> {ticket.assignedEmployee || "Chưa phân công"}</div>
         </div>
       </div>
+
+      {/* Modal xác nhận */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full text-center">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Xác nhận gửi phản hồi?</h3>
+            <p className="text-sm text-gray-600 mb-6">Bạn có chắc chắn muốn gửi phản hồi này kèm theo file đính kèm?</p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
+                onClick={() => setShowModal(false)}
+              >
+                Đóng
+              </button>
+              <button
+                className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded"
+                onClick={handleConfirmSend}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

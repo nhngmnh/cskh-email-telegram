@@ -32,7 +32,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true
     },
     attachments: {
-      type: DataTypes.TEXT, // sẽ dùng JSON.stringify trước khi lưu
+      type: DataTypes.TEXT,
       allowNull: true
     },
     receivedDate: {
