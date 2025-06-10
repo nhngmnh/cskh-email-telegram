@@ -1,12 +1,12 @@
 import { ticketConsumer } from "../config/kafkaConfig.js";
-import { handleACDResult, handleIncomingEmails } from "../utils/handleMessage.js";
+import { handleACDResult, handleIgnoreTicket, handleIncomingEmails } from "../utils/handleMessage.js";
 
 
 export async function startTicketConsumer() {
   await ticketConsumer.connect();
   console.log('[Kafka] Connected to Kafka as ticket-service');
 
-  await ticketConsumer.subscribe({ topic: 'acd-tickets', fromBeginning: false });
+  await ticketConsumer.subscribe({ topic: 'ignore-ticket', fromBeginning: false });
   await ticketConsumer.subscribe({ topic: 'incoming-emails', fromBeginning: false });
   await ticketConsumer.subscribe({ topic: 'acd-result', fromBeginning: false });
   await ticketConsumer.subscribe({ topic: 'agent-responses', fromBeginning: false });
@@ -20,8 +20,8 @@ export async function startTicketConsumer() {
         const data = JSON.parse(value);
         // Xử lý từng topic cụ thể
         switch (topic) {
-          case 'acd-tickets':
-            handleAcdTicket(data);
+          case 'ignore-ticket':
+            handleIgnoreTicket(data);
             break;
           case 'incoming-emails':
             handleIncomingEmails(data);
@@ -42,12 +42,6 @@ export async function startTicketConsumer() {
     }
   });
 }
-function handleAcdTicket(data) {
-  console.log('[TicketService] Handling ACD Ticket:', data);
-  // TODO: add logic to process ticket
-}
-
-
 function handleAgentResponse(data) {
   console.log('[TicketService] Handling Agent Response:', data);
   // TODO: add logic to attach response to ticket

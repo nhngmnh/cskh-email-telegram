@@ -6,13 +6,12 @@ export const AppContext = createContext();
 
 const AppContextProvider = (props) => {
   const backendurl = import.meta.env.VITE_BACKEND_URL;
-
+  const [status,setStatus]=useState(false);
   const [userData, setUserData] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [dataList, setDataList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totalPages,setTotalPages]=useState(0);
-// login
 const logout = () => {
   localStorage.removeItem('token');
   setToken('');
@@ -101,7 +100,15 @@ const logout = () => {
     toast.error(error.message)
   }
 };
-
+  const handleIgnore = async (ticket) =>{
+    try {
+      await axios.post (backendurl+'/handle-ignore',{ticketId:ticket.ticketServerId},{headers:{token}});
+      toast.success("Từ chối thành công, ticket đã được phân phối cho tư vấn viên khác!")
+    } catch (error) {
+      console.log(error);
+      toast.error("Lỗi không thể từ chối!");
+    }
+  }
   useEffect(() => {
     if (token) {
       fetchUserData()
@@ -118,7 +125,9 @@ const logout = () => {
     register,
     getData,backendurl,
     logout,totalPages,
-    replyToTicket
+    replyToTicket,
+    handleIgnore,
+    status,setStatus
   };
 
   return (

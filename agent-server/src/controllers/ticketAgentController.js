@@ -1,6 +1,6 @@
 import { ticket_agent,agent } from "../models/ticket-agentDB.js";
 import { Op }from 'sequelize'; // Import để dùng toán tử
-import cloudinary from '../config/cloudinary.js';
+import {v2 as cloudinary} from 'cloudinary'
 import { producer } from "../config/kafkaConfig.js";
 await producer.connect();
 const getAgentTicketById = async (req, res) => {
@@ -144,7 +144,35 @@ const handleReply = async (req, res) => {
     return res.status(500).json({ error: "Không thể gửi phản hồi" });
   }
 };
+const handleIgnore = async (req, res) => {
+  try {
+    const { agentId, ticketId } = req.body;
+    console.log(agentId + " " + ticketId);
+
+    // 1. Xoá bản ghi chứa ticketServerId = ticketId
+    await ticket_agent.destroy({ where: { ticketServerId: ticketId } });
+
+    // 2. Tạo payload gửi Kafka
+    const payload = {
+      agentId,
+      ticketId,
+    };
+
+    await producer.send({
+      topic: "ignore-ticket",
+      messages: [{ value: JSON.stringify(payload) }],
+    });
+
+    return res.json({
+      success: true,
+      message: "Đã xoá ticket và gửi phản hồi Kafka",
+    });
+  } catch (err) {
+    console.error("Lỗi khi xử lý từ chối ticket:", err);
+    return res.status(500).json({ error: "Không thể xử lý yêu cầu" });
+  }
+};
 export {
-    getAgentTicketById, getAgentInfo,handleReply
+    getAgentTicketById, getAgentInfo,handleReply,handleIgnore
 }
 

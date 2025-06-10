@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import startAgentConsumer from './src/services/agentConsumer.js';
 import connectDB from './src/config/connectDB.js';
 import agentRouter from './src/routes/agentRouter.js';
+import connectCloudinary from './src/config/cloudinary.js';
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 global.agentAssignments = []; // Lưu lịch sử phân phối tạm thời trong RAM
 await connectDB();
+connectCloudinary();
 // Khởi động server và consumer
 app.use('/',agentRouter)
 app.listen(PORT, () => {

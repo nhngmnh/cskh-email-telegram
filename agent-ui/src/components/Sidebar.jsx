@@ -3,7 +3,7 @@ import { AppContext } from "../context/AppContext";
 import { useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
-  const { dataList, getData, totalPages } = useContext(AppContext);
+  const { dataList, getData, totalPages,status } = useContext(AppContext);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("all"); // all | unanswered | answered
   const [page, setPage] = useState(1);
@@ -24,9 +24,10 @@ const Sidebar = () => {
 
   useEffect(() => {
     fetchTickets();
-  }, [activeTab, page]);
+  }, [activeTab, page,status]);
 
   const handleTabChange = (tab) => {
+    navigate('/');
     setActiveTab(tab);
     setPage(1); // Reset về trang đầu khi đổi tab
   };

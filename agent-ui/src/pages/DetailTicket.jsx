@@ -1,14 +1,16 @@
-import React, { useContext, useState } from "react";
-import { useParams } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import { Paperclip, Reply, Send, X } from "lucide-react";
 
 const DetailTicket = () => {
   const { id } = useParams(); // id = ticketServerId
-  const { dataList, replyToTicket } = useContext(AppContext);
+  const navigate = useNavigate();
+  const { dataList, replyToTicket, handleIgnore,status,setStatus,getData } = useContext(AppContext);
   const [responseText, setResponseText] = useState("");
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showIgnoreModal, setShowIgnoreModal] = useState(false); // Modal xác nhận từ chối
 
   const ticket = dataList.find((t) => String(t.ticketServerId) === String(id));
 
@@ -22,16 +24,24 @@ const DetailTicket = () => {
     formData.append("ticketServerId", ticket.ticketServerId);
     formData.append("to", ticket.from);
     formData.append("from", ticket.to);
-    formData.append("subject",ticket.subject);
+    formData.append("subject", ticket.subject);
     selectedFiles.forEach((file) => {
       formData.append("files", file);
     });
-    
+
     await replyToTicket(formData);
 
     setResponseText("");
     setSelectedFiles([]);
     setShowModal(false);
+    setStatus(prev=>!prev)
+    // Load lại trang
+  //  window.location.reload();
+  };
+  const handleConfirmIgnore = async () => {
+    await handleIgnore(ticket);
+    setStatus(prev=>!prev);
+    navigate("/");
   };
 
   return (
@@ -88,62 +98,66 @@ const DetailTicket = () => {
 
           {/* Reply box */}
           <div className="border-t p-4 bg-white">
-            {/* Preview selected files */}
-            {selectedFiles.length > 0 && (
-              <div className="mb-2 text-sm text-gray-700 bg-gray-100 border p-2 rounded">
-                <div className="font-medium mb-1">File đính kèm:</div>
-                <ul className="space-y-1">
-  {selectedFiles.map((file, i) => (
-    <li
-      key={i}
-      className="flex items-center justify-between bg-white px-3 py-1 rounded border text-sm"
-    >
-      <span className="truncate max-w-[80%]">{file.name}</span>
-      <button
-        onClick={() =>
-          setSelectedFiles((prev) => prev.filter((_, idx) => idx !== i))
-        }
-        className="text-red-500 hover:text-red-700"
-        title="Xoá file"
-      >
-        <X size={16} />
-      </button>
-    </li>
-  ))}
-</ul>
-
+            {ticket.agentResponse ? (
+              <div className="text-gray-500 text-sm italic">
+                Ticket này đã được phản hồi. Bạn không thể gửi thêm phản hồi mới.
               </div>
+            ) : (
+              <>
+                {selectedFiles.length > 0 && (
+                  <div className="mb-2 text-sm text-gray-700 bg-gray-100 border p-2 rounded">
+                    <div className="font-medium mb-1">File đính kèm:</div>
+                    <ul className="space-y-1">
+                      {selectedFiles.map((file, i) => (
+                        <li
+                          key={i}
+                          className="flex items-center justify-between bg-white px-3 py-1 rounded border text-sm"
+                        >
+                          <span className="truncate max-w-[80%]">{file.name}</span>
+                          <button
+                            onClick={() =>
+                              setSelectedFiles((prev) => prev.filter((_, idx) => idx !== i))
+                            }
+                            className="text-red-500 hover:text-red-700"
+                            title="Xoá file"
+                          >
+                            <X size={16} />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    placeholder="Nhập phản hồi..."
+                    className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-200"
+                  />
+
+                  <label htmlFor="fileInput" className="cursor-pointer text-gray-600 hover:text-blue-600">
+                    <Paperclip size={18} />
+                  </label>
+                  <input
+                    id="fileInput"
+                    type="file"
+                    multiple
+                    onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
+                    className="hidden"
+                  />
+
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-1"
+                  >
+                    <Send size={16} /> Gửi
+                  </button>
+                </div>
+              </>
             )}
-
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={responseText}
-                onChange={(e) => setResponseText(e.target.value)}
-                placeholder="Nhập phản hồi..."
-                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-200"
-              />
-
-              {/* File upload */}
-              <label htmlFor="fileInput" className="cursor-pointer text-gray-600 hover:text-blue-600">
-                <Paperclip size={18} />
-              </label>
-              <input
-                id="fileInput"
-                type="file"
-                multiple
-                onChange={(e) => setSelectedFiles(Array.from(e.target.files))}
-                className="hidden"
-              />
-
-              {/* Gửi */}
-              <button
-                onClick={() => setShowModal(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-1"
-              >
-                <Send size={16} /> Gửi
-              </button>
-            </div>
           </div>
         </div>
 
@@ -155,10 +169,18 @@ const DetailTicket = () => {
           <div><span className="font-medium">Ngày tạo:</span> {new Date(ticket.createdAt).toLocaleString()}</div>
           <div><span className="font-medium">Ngày cập nhật:</span> {new Date(ticket.updatedAt).toLocaleString()}</div>
           <div><span className="font-medium">Agent xử lý:</span> {ticket.assignedEmployee || "Chưa phân công"}</div>
+          {!ticket.agentResponse && (
+            <button
+              onClick={() => setShowIgnoreModal(true)}
+              className="p-2 bg-red-400 rounded-lg text-white hover:bg-red-700 hover:scale-105 transition-transform duration-150 cursor-pointer"
+            >
+              Từ chối tư vấn
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Modal xác nhận */}
+      {/* Modal xác nhận gửi phản hồi */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full text-center">
@@ -176,6 +198,30 @@ const DetailTicket = () => {
                 onClick={handleConfirmSend}
               >
                 OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal xác nhận từ chối tư vấn */}
+      {showIgnoreModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 shadow-lg max-w-md w-full text-center">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Xác nhận từ chối tư vấn?</h3>
+            <p className="text-sm text-gray-600 mb-6">Bạn có chắc chắn muốn từ chối xử lý ticket này?</p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 text-sm bg-gray-200 hover:bg-gray-300 rounded"
+                onClick={() => setShowIgnoreModal(false)}
+              >
+                Đóng
+              </button>
+              <button
+                className="px-4 py-2 text-sm bg-red-600 text-white hover:bg-red-700 rounded"
+                onClick={handleConfirmIgnore}
+              >
+                Từ chối
               </button>
             </div>
           </div>

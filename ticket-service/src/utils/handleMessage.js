@@ -86,8 +86,47 @@ const handleACDResult = async (data) => {
     return false;
   }
 };
+const handleIgnoreTicket = async (data) => {
+  try {
+    // 1. Tìm ticket hiện tại
+    const ticketRecord = await ticket.findOne({ where: { ticketId: data.ticketId } });
+
+    if (!ticketRecord) {
+      throw new Error(`Ticket with ID ${data.ticketId} not found`);
+    }
+
+    // 2. Lấy danh sách ignoredEmployees và cập nhật nếu chưa có
+    let ignored = [];
+    try {
+      ignored = JSON.parse(ticketRecord.ignoredEmployees || '[]');
+    } catch (e) {
+      console.warn('Invalid ignoredEmployees JSON:', ticketRecord.ignoredEmployees);
+    }
+
+    if (!ignored.includes(data.agentId)) {
+      ignored.push(data.agentId);
+    }
+
+    // 3. Cập nhật lại bản ghi
+    await ticket.update(
+      { ignoredEmployees: JSON.stringify(ignored) },
+      { where: { ticketId: data.ticketId } }
+    );
+
+    // 4. Gửi Kafka
+    await sendKafkaMessage('ticket', {
+      ticketId: data.ticketId,
+      ignoredEmployees: ignored
+    });
+
+  } catch (error) {
+    console.error('Error in handleIgnoreTicket:', error.message);
+    throw error;
+  }
+};
 
 export {
   handleIncomingEmails,
-  handleACDResult
+  handleACDResult,
+  handleIgnoreTicket,
 };
