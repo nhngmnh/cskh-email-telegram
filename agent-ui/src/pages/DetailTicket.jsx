@@ -60,27 +60,30 @@ const DetailTicket = () => {
               />
             </div>
 
-            {ticket.attachments?.length > 0 && (
-              <div className="max-w-lg bg-white p-4 rounded-lg shadow border border-gray-200">
-                <div className="flex items-center gap-2 text-gray-700 mb-2 font-medium">
-                  <Paperclip size={18} /> Đính kèm:
-                </div>
-                <ul className="list-disc list-inside text-blue-600 text-sm">
-                  {ticket.attachments.map((file, i) => (
-                    <li key={i}>
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline"
-                      >
-                        {file.filename}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {ticket.attachments && JSON.parse(ticket.attachments).length > 0 && (
+  <div className="max-w-lg bg-white p-4 rounded-lg shadow border border-gray-200">
+    <div className="flex items-center gap-2 text-gray-700 mb-2 font-medium">
+      <Paperclip size={18} /> Đính kèm:
+    </div>
+    <ul className="list-disc list-inside text-blue-600 text-sm">
+      {JSON.parse(ticket.attachments).map((url, i) => {
+        const filename = url.split("/").pop();
+        return (
+          <li key={i}>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              {filename}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+)}
 
             {ticket.agentResponse && (
               <div className="max-w-lg bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm ml-auto">

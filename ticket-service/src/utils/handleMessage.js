@@ -57,6 +57,7 @@ const handleACDResult = async (data) => {
         html:ticketSave.html,
         from: ticketSave.from,
         to: ticketSave.to,
+        attachments:ticketSave.attachments,
         subject: ticketSave.subject,
         assignedEmployee: ticketSave.assignedEmployee,
         receivedDate: ticketSave.receivedDate,

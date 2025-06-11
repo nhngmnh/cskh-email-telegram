@@ -7,6 +7,7 @@ import axios from 'axios';
 import authenticateToken from '../middlewares/authAgent.js';
 import {getAgentInfo, getAgentTicketById, handleIgnore, handleReply} from '../controllers/ticketAgentController.js';
 import upload from '../middlewares/multer.js';
+import getEmployeesAndSendToKafka from '../utils/getEmployeesAndSendToKafka.js';
 dotenv.config()
 const agentRouter = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET
@@ -40,7 +41,7 @@ agentRouter.post('/register', async (req, res) => {
     );
 
     const { password: _, ...agentInfo } = newAgent.toJSON();
-
+    await getEmployeesAndSendToKafka();
     return res.status(201).json({ success: true, token });
   } catch (error) {
     console.error('Đăng ký lỗi:', error);

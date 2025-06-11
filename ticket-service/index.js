@@ -1,8 +1,10 @@
+import connectCloudinary from './src/config/cloudinary.js';
 import connectDB from './src/config/connectDB.js';
 import { initKafkaProducer, initKafkaConsumer } from './src/config/kafkaConfig.js';
 import { startTicketConsumer } from './src/services/ticketConsumer.js';
 import dotenv from 'dotenv'
 dotenv.config();
+connectCloudinary();
 async function startApp() {
   try {
 

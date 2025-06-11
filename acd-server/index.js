@@ -8,11 +8,6 @@ import startAcdConsumer from './src/service/acdConsumer.js';
 import acdRouter from './src/routes/acdRouter.js';
 
 global.employeeList = [
-  { id: 1, name: 'Alice', activeTickets: 0 },
-  { id: 2, name: 'Bob', activeTickets: 0 },
-  { id: 3, name: 'Charlie', activeTickets: 0 },
-  { id: 4, name: 'David', activeTickets: 0 },
-  { id: 5, name: 'Eva', activeTickets: 0 }
 ];
 
 global.totalEmployees = global.employeeList.length;

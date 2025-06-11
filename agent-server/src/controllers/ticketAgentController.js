@@ -2,7 +2,7 @@ import { ticket_agent,agent } from "../models/ticket-agentDB.js";
 import { Op }from 'sequelize'; // Import để dùng toán tử
 import {v2 as cloudinary} from 'cloudinary'
 import { producer } from "../config/kafkaConfig.js";
-await producer.connect();
+
 const getAgentTicketById = async (req, res) => {
   try {
     const agentId = req.body?.agentId;
@@ -120,7 +120,7 @@ const handleReply = async (req, res) => {
 
     // Cập nhật bản ghi ticket_agent
     await ticket_agent.update(
-      { agentResponse },
+      { agentResponse, status:'closed' },
       { where: { ticketServerId } }
     );
 

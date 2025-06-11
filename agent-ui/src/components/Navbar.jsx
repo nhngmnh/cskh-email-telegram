@@ -7,7 +7,7 @@ const Navbar = () => {
   const { userData, logout } = useContext(AppContext);  
   return (
     <div className="flex items-center justify-between p-4 bg-white border-b shadow-sm">
-      <h1 className="text-xl font-semibold text-blue-600">CSKH Dashboard</h1>
+      <h1 onClick={()=>navigate('/')} className="text-xl font-semibold text-blue-600 hover:cursor-pointer">CSKH Dashboard</h1>
 
       <div className="flex items-center gap-4">
         {userData && (

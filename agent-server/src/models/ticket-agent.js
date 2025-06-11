@@ -38,10 +38,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: false
     },
-    agentResponse:{
-      type:DataTypes.TEXT,
-      allowNull:true,
-      defaultValue:null,
+    agentResponse: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      defaultValue: null,
     },
     status: {
       type: DataTypes.ENUM('open', 'closed'),
