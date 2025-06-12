@@ -11,7 +11,18 @@ global.employeeList = [
 ];
 
 global.totalEmployees = global.employeeList.length;
-global.strategy= 'round-robin'
+global.strategy= 'round-robin';
+function resetActiveTickets() {
+  global.employeeList.forEach(emp => {
+    emp.activeTickets = 0;
+  });
+  console.log(`[${new Date().toISOString()}] Reset tất cả activeTickets về 0.`);
+}
+
+// Đặt lịch chạy mỗi 24h
+setInterval(resetActiveTickets, 24 * 60 * 60 * 1000);
+
+resetActiveTickets();
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }))
