@@ -9,7 +9,7 @@ const strategies = [
 ];
 
 const App = () => {
-  const [selectedStrategy, setSelectedStrategy] = useState('Round Robin');
+  const [selectedStrategy, setSelectedStrategy] = useState(localStorage.getItem('strategy')||'Round Robin');
   const [initialLoaded, setInitialLoaded] = useState(false);
   const [ticketDistribution, setTicketDistribution] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -72,7 +72,11 @@ const App = () => {
               <select
                 id="strategy"
                 value={selectedStrategy}
-                onChange={(e) => setSelectedStrategy(e.target.value)}
+               onChange={(e) => {
+  setSelectedStrategy(e.target.value);
+  localStorage.setItem('strategy', e.target.value);
+}}
+
                 className="w-full p-3 border rounded-lg text-sm"
               >
                 {strategies.map((s) => (
